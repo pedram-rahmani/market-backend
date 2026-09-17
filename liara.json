@@ -1,0 +1,11 @@
+{
+  "laravel": {
+    "phpVersion": "8.4"
+  },
+  "disks": [
+    {
+      "name": "storage",
+      "mountTo": "storage"
+    }
+  ]
+}
