@@ -6,9 +6,68 @@ use App\Http\Controllers\Controller;
 use App\Models\General\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\User\User;
+use Illuminate\Support\Facades\Auth;
 
 class NotificationController extends Controller
 {
+    private function authorizeManagement(): void
+    {
+        $user = Auth::user();
+        abort_unless($user && ($user->isAdmin() || $user->hasPermission('notifications.manage')), 403);
+    }
+
+    public function managementIndex()
+    {
+        $this->authorizeManagement();
+
+        $history = Notification::query()
+            ->where('type', 'admin-message')
+            ->select('title', 'message', 'created_at', DB::raw('count(*) as recipient_count'))
+            ->groupBy('title', 'message', 'created_at')
+            ->orderByDesc('created_at')
+            ->limit(50)
+            ->get();
+
+        return response()->json([
+            'recipients' => User::query()->select('id', 'name', 'username', 'email')->orderBy('name')->get(),
+            'history' => $history,
+        ]);
+    }
+
+    public function sendManagementMessage(Request $request)
+    {
+        $this->authorizeManagement();
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'message' => 'required|string|max:5000',
+            'recipient_id' => 'nullable|integer|exists:users,id',
+            'send_to_all' => 'sometimes|boolean',
+        ]);
+
+        if (empty($validated['recipient_id']) && empty($validated['send_to_all'])) {
+            return response()->json(['message' => 'یک گیرنده انتخاب کنید یا ارسال همگانی را فعال کنید.'], 422);
+        }
+
+        $recipientIds = !empty($validated['send_to_all'])
+            ? User::query()->pluck('id')
+            : collect([$validated['recipient_id']]);
+
+        $now = now();
+        Notification::insert($recipientIds->map(fn (int $recipientId) => [
+            'user_id' => $recipientId,
+            'type' => 'admin-message',
+            'title' => $validated['title'],
+            'message' => $validated['message'],
+            'is_read' => false,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ])->all());
+
+        return response()->json(['message' => 'پیام با موفقیت ارسال شد.']);
+    }
+
     // List all notifications for apiResource (with optional type filtering and pagination)
     public function index(Request $request)
     {
@@ -47,7 +106,7 @@ class NotificationController extends Controller
             'category-management' => $rawCounts['category-management'] ?? 0,
             'site-management' => $rawCounts['site-management'] ?? 0,
             'user-interactions' => $rawCounts['user-interactions'] ?? $rawCounts['comment'] ?? 0,
-            'notifications' => $rawCounts['notifications'] ?? 0,
+            'notifications' => ($rawCounts['notifications'] ?? 0) + ($rawCounts['admin-message'] ?? 0),
             'dashboard' => $rawCounts['dashboard'] ?? 0,
             'purchases' => $rawCounts['purchases'] ?? 0,
             'support' => $rawCounts['support'] ?? 0,

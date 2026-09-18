@@ -49,7 +49,7 @@ Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 | Protected Routes (Authenticated Users)
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth:sanctum', 'sanctum.stateful'])->group(function () {
+Route::middleware(['auth:sanctum'])->group(function () {
 
     // --- User Dashboard ---
     Route::get('/me', [AuthController::class, 'me']);
@@ -79,6 +79,8 @@ Route::middleware(['auth:sanctum', 'sanctum.stateful'])->group(function () {
     Route::get('/notifications/counts', [NotificationController::class, 'getUnreadCounts']);
     Route::post('/notifications/mark-as-read', [NotificationController::class, 'markAsRead']);
     Route::get('/notifications/by-type', [NotificationController::class, 'getNotificationsByType']);
+    Route::get('/admin/notifications', [NotificationController::class, 'managementIndex']);
+    Route::post('/admin/notifications', [NotificationController::class, 'sendManagementMessage']);
     Route::apiResource('notifications', NotificationController::class)
         ->only(['index', 'show', 'destroy']);
 

@@ -18,8 +18,6 @@ class ProductPolicy
         return $user->isAdmin() || $user->hasPermission('products.view');
     }
 
-    // app/Policies/ProductPolicy.php
-
     public function create(User $user): bool
     {
         Log::info('User permissions check:', [

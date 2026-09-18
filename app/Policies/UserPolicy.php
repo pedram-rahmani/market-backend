@@ -38,19 +38,20 @@ class UserPolicy
             return true;
         }
 
-        if ($currentUser->isCoAdmin()) {
-            if ($userToUpdate->isAdmin()) {
-                return false;
-            }
-            return true;
-        }
-
-        return false;
+        return $currentUser->isCoAdmin()
+            && !$userToUpdate->isAdmin()
+            && $currentUser->hasPermission('users.edit');
     }
 
     public function viewDeleted(User $user)
     {
         return $user->isAdmin() || $user->hasPermission('users.view');
+    }
+
+    public function updatePermissions(User $user, User $targetUser): bool
+    {
+        return $user->isAdmin()
+            || ($user->hasPermission('users.edit') && !$targetUser->isAdmin());
     }
 
     public function restore(User $user, User $targetUser)

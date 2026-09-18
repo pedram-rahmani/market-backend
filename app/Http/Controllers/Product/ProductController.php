@@ -223,6 +223,7 @@ class ProductController extends Controller
     public function update(Request $request, $id)
     {
         $product = Product::findOrFail($id);
+        $this->authorize('update', $product);
 
         $request->validate([
             'name' => 'required|string|max:255',
@@ -357,6 +358,7 @@ class ProductController extends Controller
 
     public function destroy(Product $product)
     {
+        $this->authorize('delete', $product);
         return DB::transaction(function () use ($product) {
             if ($product->img) Storage::disk('public')->delete($product->img);
             $product->colors()->delete();

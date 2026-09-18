@@ -13,8 +13,10 @@ class SettingController extends Controller
     {
         $settings = Setting::pluck('value', 'key')->toArray();
 
-        if (isset($settings['site_logo']) && $settings['site_logo']) {
-            $settings['site_logo'] = asset('storage/' . $settings['site_logo']);
+        foreach (['site_logo', 'site_favicon'] as $imageKey) {
+            if (isset($settings[$imageKey]) && $settings[$imageKey]) {
+                $settings[$imageKey] = asset('storage/' . $settings[$imageKey]);
+            }
         }
 
         foreach (['social_links', 'contact_info', 'footer_links'] as $key) {
@@ -29,9 +31,12 @@ class SettingController extends Controller
 
     public function update(Request $request)
     {
+        abort_unless($request->user()?->isAdmin() || $request->user()?->hasPermission('settings.edit'), 403);
+
         $request->validate([
             'site_name'    => 'nullable|string|max:255',
             'site_logo'    => 'nullable|image|max:2048',
+            'site_favicon' => 'nullable|image|mimes:ico,png,jpg,jpeg,svg,webp|max:1024',
             'footer_text'  => 'nullable|string',
             'social_links' => 'nullable',
             'contact_info' => 'nullable',
@@ -40,17 +45,11 @@ class SettingController extends Controller
         ]);
 
         if ($request->hasFile('site_logo')) {
-            $file = $request->file('site_logo');
-            $oldLogo = Setting::where('key', 'site_logo')->value('value');
-            if ($oldLogo && Storage::disk('public')->exists($oldLogo)) {
-                Storage::disk('public')->delete($oldLogo);
-            }
-            $path = $file->store('settings', 'public');
+            $this->storeImageSetting('site_logo', $request->file('site_logo'));
+        }
 
-            Setting::updateOrCreate(
-                ['key' => 'site_logo'],
-                ['value' => $path]
-            );
+        if ($request->hasFile('site_favicon')) {
+            $this->storeImageSetting('site_favicon', $request->file('site_favicon'));
         }
 
         $allowedKeys = [
@@ -92,5 +91,18 @@ class SettingController extends Controller
         return response()->json([
             'message' => 'تنظیمات سایت با موفقیت به‌روزرسانی شدند.'
         ]);
+    }
+
+    private function storeImageSetting(string $key, \Illuminate\Http\UploadedFile $file): void
+    {
+        $oldPath = Setting::where('key', $key)->value('value');
+        if ($oldPath && Storage::disk('public')->exists($oldPath)) {
+            Storage::disk('public')->delete($oldPath);
+        }
+
+        Setting::updateOrCreate(
+            ['key' => $key],
+            ['value' => $file->store('settings', 'public')]
+        );
     }
 }
