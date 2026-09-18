@@ -10,10 +10,11 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Carbon\Carbon;
+use App\Services\NotificationService;
 
 class AuthController extends Controller
 {
-    public function registerUser(Request $request)
+    public function registerUser(Request $request, NotificationService $notifications)
     {
         try {
             $this->validateRegistration($request);
@@ -23,6 +24,16 @@ class AuthController extends Controller
 
         $user = $this->createUser($request);
         $token = $user->createToken('auth_token')->plainTextToken;
+
+        if (!$user->isAdmin()) {
+            $notifications->notifyAdmins(
+                type: 'user-management',
+                title: 'کاربر جدید',
+                message: "کاربر جدیدی با نام {$user->name} در سایت ثبت‌نام کرد.",
+                targetLink: '/my-account/user-management',
+                exceptUserId: $user->id,
+            );
+        }
 
         $user->load('addresses');
 

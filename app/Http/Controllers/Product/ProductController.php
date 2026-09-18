@@ -205,7 +205,7 @@ class ProductController extends Controller
                         $warrantyId = $w['warranty_id'] ?? $w['id'] ?? null;
                         if ($warrantyId) {
                             $formattedWarranties[$warrantyId] = [
-                                'price' => $w['price'] ?? 0,
+                                'price' => ($w['price'] ?? '') === '' ? 0 : (int) $w['price'],
                                 'is_default' => filter_var($w['is_default'] ?? false, FILTER_VALIDATE_BOOLEAN) ? 1 : 0,
                             ];
                         }
@@ -309,7 +309,7 @@ class ProductController extends Controller
                         $warrantyId = $w['warranty_id'] ?? $w['id'] ?? null;
                         if ($warrantyId) {
                             $formattedWarranties[$warrantyId] = [
-                                'price' => $w['price'] ?? 0,
+                                'price' => ($w['price'] ?? '') === '' ? 0 : (int) $w['price'],
                                 'is_default' => filter_var($w['is_default'] ?? false, FILTER_VALIDATE_BOOLEAN) ? 1 : 0,
                             ];
                         }

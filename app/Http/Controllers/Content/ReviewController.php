@@ -7,8 +7,8 @@ use Illuminate\Http\Request;
 use App\Services\FileUploaderService;
 use App\Models\Content\Review;
 use App\Models\Content\ReviewMedia;
-use App\Models\General\Notification;
 use Illuminate\Support\Facades\Auth;
+use App\Services\NotificationService;
 
 class ReviewController extends Controller
 {
@@ -56,7 +56,11 @@ class ReviewController extends Controller
         return response()->json($reviews);
     }
 
-    public function store(Request $request, FileUploaderService $uploader)
+    public function store(
+        Request $request,
+        FileUploaderService $uploader,
+        NotificationService $notifications
+    )
     {
         $validated = $request->validate([
             'product_id' => 'required|exists:products,id',
@@ -87,15 +91,30 @@ class ReviewController extends Controller
             }
         }
 
-        // **ساخت نوتیفیکیشن برای ثبت نظر**
-        Notification::create([
-            'user_id' => Auth::id(),
-            'type' => 'user-interactions',
-            'title' => 'دیدگاه جدید',
-            'message' => 'دیدگاه شما با موفقیت ثبت شد و در انتظار تایید است.',
-            'target_link' => '/my-account/user-interactions',
-            'is_read' => false,
-        ]);
+        if ($review->parent_id && $review->parent?->user_id) {
+            $notifications->notifyUser(
+                userId: $review->parent->user_id,
+                type: 'user-interactions',
+                title: 'پاسخ جدید به دیدگاه شما',
+                message: 'ادمین به دیدگاه شما پاسخ داده است.',
+                targetLink: '/my-account/user-interactions',
+            );
+        } elseif (!$request->user()->isAdmin()) {
+            $notifications->notifyAdmins(
+                type: 'user-interactions',
+                title: 'دیدگاه جدید',
+                message: "دیدگاه جدیدی از طرف {$request->user()->name} برای بررسی ثبت شد.",
+                targetLink: '/my-account/user-interactions',
+                exceptUserId: Auth::id(),
+            );
+            $notifications->notifyUser(
+                userId: Auth::id(),
+                type: 'user-interactions',
+                title: 'دیدگاه شما ثبت شد',
+                message: 'دیدگاه شما با موفقیت ثبت شد و پس از بررسی نمایش داده خواهد شد.',
+                targetLink: '/my-account/user-interactions',
+            );
+        }
 
         return response()->json([
             'message' => 'نظر شما با موفقیت ثبت شد و پس از تأیید ادمین نمایش داده می‌شود.',
@@ -135,10 +154,19 @@ class ReviewController extends Controller
         ]);
     }
 
-    public function toggleApproval(Review $review)
+    public function toggleApproval(Review $review, NotificationService $notifications)
     {
         $review->is_approved = !$review->is_approved;
         $review->save();
+        $notifications->notifyUser(
+            userId: $review->user_id,
+            type: 'user-interactions',
+            title: $review->is_approved ? 'دیدگاه شما تایید شد' : 'دیدگاه شما نیاز به بررسی دارد',
+            message: $review->is_approved
+                ? 'دیدگاه شما تایید شد و در سایت نمایش داده می‌شود.'
+                : 'وضعیت تایید دیدگاه شما تغییر کرد؛ برای بررسی بیشتر به تعاملات کاربران بروید.',
+            targetLink: '/my-account/user-interactions',
+        );
 
         return response()->json([
             'message' => 'وضعیت تایید دیدگاه با موفقیت تغییر کرد.',

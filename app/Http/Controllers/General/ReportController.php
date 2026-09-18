@@ -7,10 +7,15 @@ use App\Models\General\Report;
 use App\Models\Content\Review;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Services\NotificationService;
 
 class ReportController extends Controller
 {
-    public function storeReviewReport(Request $request, Review $review)
+    public function storeReviewReport(
+        Request $request,
+        Review $review,
+        NotificationService $notifications
+    )
     {
         $request->validate([
             'reason' => 'required|string|max:255',
@@ -37,6 +42,14 @@ class ReportController extends Controller
             'reason' => $request->reason,
             'description' => $request->description,
         ]);
+
+        $notifications->notifyAdmins(
+            type: 'user-interactions',
+            title: 'گزارش جدید برای دیدگاه',
+            message: "یک دیدگاه توسط کاربر {$request->user()->name} گزارش شد.",
+            targetLink: '/my-account/user-interactions',
+            exceptUserId: $userId,
+        );
 
         return response()->json([
             'message' => 'گزارش شما با موفقیت ثبت شد. با تشکر از همکاری شما.'

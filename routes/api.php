@@ -79,7 +79,8 @@ Route::middleware(['auth:sanctum', 'sanctum.stateful'])->group(function () {
     Route::get('/notifications/counts', [NotificationController::class, 'getUnreadCounts']);
     Route::post('/notifications/mark-as-read', [NotificationController::class, 'markAsRead']);
     Route::get('/notifications/by-type', [NotificationController::class, 'getNotificationsByType']);
-    Route::apiResource('notifications', NotificationController::class);
+    Route::apiResource('notifications', NotificationController::class)
+        ->only(['index', 'show', 'destroy']);
 
     // --- Product Reviews & Reactions & Reports ---
     Route::post('/reviews', [ReviewController::class, 'store']);

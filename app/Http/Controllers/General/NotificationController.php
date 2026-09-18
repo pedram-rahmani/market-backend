@@ -47,6 +47,7 @@ class NotificationController extends Controller
             'category-management' => $rawCounts['category-management'] ?? 0,
             'site-management' => $rawCounts['site-management'] ?? 0,
             'user-interactions' => $rawCounts['user-interactions'] ?? $rawCounts['comment'] ?? 0,
+            'notifications' => $rawCounts['notifications'] ?? 0,
             'dashboard' => $rawCounts['dashboard'] ?? 0,
             'purchases' => $rawCounts['purchases'] ?? 0,
             'support' => $rawCounts['support'] ?? 0,

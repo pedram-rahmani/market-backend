@@ -10,7 +10,7 @@ class PermissionList
     public const MANAGE_PRODUCTS = 'manage-products';
     public const VOTE_ON_COMMENT = 'vote-comment';
     public const VIEW_ADMIN_DASHBOARD = 'view-admin-dashboard';
-    // Add more permissions here as needed
+    // others permissions
 
     /**
      * Optionally, you can return all permissions as an array
@@ -24,7 +24,7 @@ class PermissionList
             self::MANAGE_PRODUCTS,
             self::VOTE_ON_COMMENT,
             self::VIEW_ADMIN_DASHBOARD,
-            // Add others here if you like
+            // others
         ];
     }
 }

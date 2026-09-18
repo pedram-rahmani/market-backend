@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Content\Question;
 use App\Models\Content\QuestionReaction;
 use Illuminate\Support\Facades\Auth;
+use App\Services\NotificationService;
 
 class QuestionController extends Controller
 {
@@ -83,7 +84,7 @@ class QuestionController extends Controller
     }
 
     // Store a new question or reply
-    public function store(Request $request)
+    public function store(Request $request, NotificationService $notifications)
     {
         $validated = $request->validate([
             'product_id' => 'required|exists:products,id',
@@ -102,6 +103,33 @@ class QuestionController extends Controller
             'is_approved' => $isAdmin ? true : false,
             'is_admin_answer' => $isAdmin && isset($validated['parent_id']),
         ]);
+
+        if (!$isAdmin) {
+            $notifications->notifyAdmins(
+                type: 'user-interactions',
+                title: 'پرسش جدید',
+                message: "پرسش جدیدی از طرف {$user->name} برای بررسی ثبت شد.",
+                targetLink: '/my-account/user-interactions',
+                exceptUserId: $user->id,
+            );
+        }
+        if ($question->parent_id && $question->parent?->user_id) {
+            $notifications->notifyUser(
+                userId: $question->parent->user_id,
+                type: 'user-interactions',
+                title: 'پاسخ جدید به پرسش شما',
+                message: 'پاسخ جدیدی برای پرسش شما ثبت شده است.',
+                targetLink: '/my-account/user-interactions',
+            );
+        } elseif (!$isAdmin) {
+            $notifications->notifyUser(
+                userId: $user->id,
+                type: 'user-interactions',
+                title: 'پرسش شما ثبت شد',
+                message: 'پرسش شما با موفقیت ثبت شد و پس از بررسی نمایش داده خواهد شد.',
+                targetLink: '/my-account/user-interactions',
+            );
+        }
 
         return response()->json([
             'message' => 'پرسش/پاسخ شما با موفقیت ثبت شد.',
@@ -138,10 +166,19 @@ class QuestionController extends Controller
     }
 
     // Toggle approval status for admin panel
-    public function toggleApproval(Question $question)
+    public function toggleApproval(Question $question, NotificationService $notifications)
     {
         $question->is_approved = !$question->is_approved;
         $question->save();
+        $notifications->notifyUser(
+            userId: $question->user_id,
+            type: 'user-interactions',
+            title: $question->is_approved ? 'پرسش شما تایید شد' : 'پرسش شما نیاز به بررسی دارد',
+            message: $question->is_approved
+                ? 'پرسش شما تایید شد و در سایت نمایش داده می‌شود.'
+                : 'وضعیت تایید پرسش شما تغییر کرد؛ برای بررسی بیشتر به تعاملات کاربران بروید.',
+            targetLink: '/my-account/user-interactions',
+        );
 
         return response()->json([
             'message' => 'وضعیت تایید تغییر کرد.',
