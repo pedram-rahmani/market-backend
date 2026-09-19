@@ -99,7 +99,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // --- Admin Review Management ---
     Route::get('/admin/reviews', [ReviewController::class, 'adminIndex'])
-        ->middleware('can:comments.manage');
+        ->middleware('can:interactions.view');
     Route::patch('/admin/reviews/{review}/approval', [ReviewController::class, 'toggleApproval'])
         ->middleware('can:comments.approve');
     Route::patch('/admin/media/{media}/approval', [ReviewController::class, 'toggleMediaApproval'])
@@ -107,7 +107,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // --- Admin Question Management ---
     Route::get('/admin/questions', [QuestionController::class, 'adminIndex'])
-        ->middleware('can:questions.manage');
+        ->middleware('can:interactions.view');
     Route::patch('/admin/questions/{question}/approval', [QuestionController::class, 'toggleApproval'])
         ->middleware('can:questions.approve');
     Route::patch('/admin/answers/{question}/approval', [QuestionController::class, 'toggleApproval'])
