@@ -21,7 +21,11 @@ return [
     'categories.delete' => 'حذف دسته‌بندی',
 
     'comments.manage' => 'تایید، ویرایش یا حذف دیدگاه‌ها',
+    'comments.approve' => 'تایید متن دیدگاه‌ها',
+    'comments.media.approve' => 'تایید فایل‌های دیدگاه‌ها',
     'questions.manage' => 'پاسخ به سوالات کاربران',
+    'questions.approve' => 'تایید پرسش‌های کاربران',
+    'answers.approve' => 'تایید پاسخ‌های کاربران',
     'tickets.view' => 'مشاهده تیکت‌های پشتیبانی',
     'tickets.reply' => 'پاسخ به تیکت‌های پشتیبانی',
 

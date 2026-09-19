@@ -98,13 +98,20 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/questions/{question}/react', [QuestionController::class, 'react']);
 
     // --- Admin Review Management ---
-    Route::get('/admin/reviews', [ReviewController::class, 'adminIndex']);
-    Route::patch('/admin/reviews/{review}/approval', [ReviewController::class, 'toggleApproval']);
-    Route::patch('/admin/media/{media}/approval', [ReviewController::class, 'toggleMediaApproval']);
+    Route::get('/admin/reviews', [ReviewController::class, 'adminIndex'])
+        ->middleware('can:comments.manage');
+    Route::patch('/admin/reviews/{review}/approval', [ReviewController::class, 'toggleApproval'])
+        ->middleware('can:comments.approve');
+    Route::patch('/admin/media/{media}/approval', [ReviewController::class, 'toggleMediaApproval'])
+        ->middleware('can:comments.media.approve');
 
     // --- Admin Question Management ---
-    Route::get('/admin/questions', [QuestionController::class, 'adminIndex']);
-    Route::patch('/admin/questions/{question}/approval', [QuestionController::class, 'toggleApproval']);
+    Route::get('/admin/questions', [QuestionController::class, 'adminIndex'])
+        ->middleware('can:questions.manage');
+    Route::patch('/admin/questions/{question}/approval', [QuestionController::class, 'toggleApproval'])
+        ->middleware('can:questions.approve');
+    Route::patch('/admin/answers/{question}/approval', [QuestionController::class, 'toggleApproval'])
+        ->middleware('can:answers.approve');
 
     // --- User Interactions ---
     Route::get('/user/reviews', [ReviewController::class, 'userReviews']);

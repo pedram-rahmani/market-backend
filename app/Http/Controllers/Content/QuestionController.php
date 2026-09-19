@@ -15,11 +15,13 @@ class QuestionController extends Controller
     public function index()
     {
         $questions = Question::whereNull('parent_id')
+            ->where('is_approved', true)
             ->with([
                 'user:id,name',
                 'product:id,name',
                 'replies' => function ($query) {
-                    $query->with('user:id,name')->withCount([
+                    $query->where('is_approved', true)
+                        ->with('user:id,name')->withCount([
                         'reactions as likes_count' => fn($q) => $q->where('type', 'like'),
                         'reactions as dislikes_count' => fn($q) => $q->where('type', 'dislike'),
                     ]);
