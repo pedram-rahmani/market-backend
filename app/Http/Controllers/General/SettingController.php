@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\General\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 
 class SettingController extends Controller
 {
@@ -19,10 +21,10 @@ class SettingController extends Controller
             }
         }
 
-        foreach (['social_links', 'contact_info', 'footer_links'] as $key) {
+        foreach (['social_links', 'contact_info', 'footer_links', 'trust_badges'] as $key) {
             if (isset($settings[$key])) {
                 $decoded = json_decode($settings[$key], true);
-                $settings[$key] = is_array($decoded) ? $decoded : [];
+                $settings[$key] = is_array($decoded) ? $decoded : ($key === 'trust_badges' ? [] : []);
             }
         }
 
@@ -40,9 +42,56 @@ class SettingController extends Controller
             'footer_text'  => 'nullable|string',
             'social_links' => 'nullable',
             'contact_info' => 'nullable',
-            'footer_links' => 'nullable',
-            'trust_badges' => 'nullable|string',
+            'footer_links' => 'nullable|json|max:20000',
+            'trust_badges' => 'nullable|json|max:10000',
         ]);
+
+        if ($request->filled('trust_badges')) {
+            $trustBadge = json_decode($request->input('trust_badges'), true);
+            if (!is_array($trustBadge)) {
+                throw ValidationException::withMessages([
+                    'trust_badges' => 'ساختار نشان اعتماد نامعتبر است.',
+                ]);
+            }
+
+            $badgeValidator = Validator::make($trustBadge ?: [], [
+                'image_url' => ['nullable', 'string', 'max:2048', 'regex:/^(https?:\/\/|\/)/'],
+                'link_url' => ['nullable', 'string', 'max:2048', 'regex:/^https?:\/\//'],
+                'alt' => 'nullable|string|max:255',
+            ]);
+
+            if ($badgeValidator->fails()) {
+                throw new ValidationException($badgeValidator);
+            }
+        }
+
+        if ($request->filled('footer_links')) {
+            $footerLinks = json_decode($request->input('footer_links'), true);
+            if (!is_array($footerLinks)) {
+                throw ValidationException::withMessages([
+                    'footer_links' => 'ساختار لینک‌های فوتر نامعتبر است.',
+                ]);
+            }
+
+            $footerLinksValidator = Validator::make(
+                $footerLinks,
+                [
+                    '*.title' => 'required|string|max:100',
+                    '*.items' => 'required|array|max:20',
+                    '*.items.*.label' => 'required|string|max:100',
+                    '*.items.*.url' => [
+                        'required',
+                        'string',
+                        'max:2048',
+                        'regex:/^(\/|https?:\/\/)/',
+                    ],
+                ],
+            );
+
+            if ($footerLinksValidator->fails()) {
+                throw new ValidationException($footerLinksValidator);
+            }
+        }
 
         if ($request->hasFile('site_logo')) {
             $this->storeImageSetting('site_logo', $request->file('site_logo'));
@@ -58,11 +107,11 @@ class SettingController extends Controller
             'social_links',
             'contact_info',
             'footer_links',
-            'trust_badges'
+            'trust_badges',
         ];
 
         foreach ($allowedKeys as $key) {
-            if (!$request->has($key)) {
+            if (!$request->exists($key)) {
                 continue;
             }
 
@@ -72,7 +121,12 @@ class SettingController extends Controller
                 $value = null;
             }
 
-            $isJsonField = in_array($key, ['social_links', 'contact_info', 'footer_links']);
+            $isJsonField = in_array($key, [
+                'social_links',
+                'contact_info',
+                'footer_links',
+                'trust_badges',
+            ]);
             if ($isJsonField) {
                 if (!is_array($value)) {
                     $value = json_decode($value, true);

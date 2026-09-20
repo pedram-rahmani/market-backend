@@ -40,7 +40,6 @@ return [
 
         'public' => [
             'driver' => 'local',
-            // اگر در لیارا پوشه storage روی دیسک است، مستقیم به مسیر ذخیره فایل‌ها اشاره می‌کنیم
             'root' => storage_path('app/public'),
             'url' => env('APP_URL').'/storage',
             'visibility' => 'public',
@@ -48,7 +47,7 @@ return [
             'report' => false,
         ],
 
-        // اضافه کردن یک دیسک اختصاصی برای دسترسی مستقیم به کل پوشه storage لیارا
+        // storage disk (liara)
         'storage' => [
             'driver' => 'local',
             'root' => storage_path(),

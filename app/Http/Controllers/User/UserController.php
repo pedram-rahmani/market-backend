@@ -23,7 +23,7 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'username' => 'required|string|max:255|unique:users,username',
-            'email' => 'nullable|email|unique:users,email',
+            'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8|max:72',
             'role' => 'nullable|in:user,co-admin,admin',
             'phone' => 'nullable|string|max:20',
@@ -96,7 +96,7 @@ class UserController extends Controller
             'phone' => 'nullable|string|max:20',
             'email' => 'sometimes|email|unique:users,email,' . $id,
             'avatar' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
-            'postal_address' => 'nullable|string',
+            'postal_address' => 'nullable|string|max:2000',
             'admin_notes' => 'nullable|string',
             'password' => 'nullable|string|min:8|max:72',
             'permissions' => 'nullable|array',
@@ -130,14 +130,23 @@ class UserController extends Controller
 
         // address management
         if ($request->has('postal_address') || $request->has('phone')) {
-            $user->addresses()->updateOrCreate(
-                ['user_id' => $user->id, 'is_default' => true],
-                [
-                    'phone' => $validated['phone'] ?? $user->phone,
-                    'postal_address' => $request->input('postal_address', optional($user->addresses()->where('is_default', true)->first())->postal_address),
-                    'is_default' => true
-                ]
+            $defaultAddress = $user->addresses()->where('is_default', true)->first();
+            $addressPhone = $validated['phone'] ?? $user->phone ?? $defaultAddress?->phone;
+            $postalAddress = $request->input(
+                'postal_address',
+                $defaultAddress?->postal_address
             );
+
+            if ($addressPhone !== null && $postalAddress !== null) {
+                $user->addresses()->updateOrCreate(
+                    ['user_id' => $user->id, 'is_default' => true],
+                    [
+                        'phone' => $addressPhone,
+                        'postal_address' => $postalAddress,
+                        'is_default' => true,
+                    ]
+                );
+            }
         }
 
         return response()->json([
@@ -239,7 +248,7 @@ class UserController extends Controller
             'phone' => 'nullable|string|max:20',
             'email' => 'sometimes|email|unique:users,email,' . $user->id,
             'avatar' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
-            'postal_address' => 'nullable|string',
+            'postal_address' => 'nullable|string|max:2000',
         ]);
 
         // avatar management
@@ -259,14 +268,23 @@ class UserController extends Controller
         ]);
 
         if ($request->has('postal_address') || $request->has('phone')) {
-            $user->addresses()->updateOrCreate(
-                ['user_id' => $user->id, 'is_default' => true],
-                [
-                    'phone' => $validated['phone'] ?? $user->phone,
-                    'postal_address' => $request->input('postal_address', ''),
-                    'is_default' => true
-                ]
+            $defaultAddress = $user->addresses()->where('is_default', true)->first();
+            $addressPhone = $validated['phone'] ?? $user->phone ?? $defaultAddress?->phone;
+            $postalAddress = $request->input(
+                'postal_address',
+                $defaultAddress?->postal_address
             );
+
+            if ($addressPhone !== null && $postalAddress !== null) {
+                $user->addresses()->updateOrCreate(
+                    ['user_id' => $user->id, 'is_default' => true],
+                    [
+                        'phone' => $addressPhone,
+                        'postal_address' => $postalAddress,
+                        'is_default' => true,
+                    ]
+                );
+            }
         }
 
         return response()->json([
