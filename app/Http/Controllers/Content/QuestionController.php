@@ -96,14 +96,21 @@ class QuestionController extends Controller
 
         $user = Auth::user();
         $isAdmin = method_exists($user, 'hasRole') ? $user->hasRole('admin') : false;
+        $isReply = !empty($validated['parent_id']);
+        $isStaffAuthor = $isAdmin ||
+            ($user->isCoAdmin() && $user->hasPermission('questions.reply'));
+
+        if ($isReply && $user->isCoAdmin() && !$user->hasPermission('questions.reply')) {
+            return response()->json(['message' => 'شما اجازه پاسخ به سوالات را ندارید.'], 403);
+        }
 
         $question = Question::create([
             'user_id' => $user->id,
             'product_id' => $validated['product_id'],
             'parent_id' => $validated['parent_id'] ?? null,
             'body' => $validated['body'],
-            'is_approved' => $isAdmin ? true : false,
-            'is_admin_answer' => $isAdmin && isset($validated['parent_id']),
+            'is_approved' => $isStaffAuthor,
+            'is_admin_answer' => $isReply && $isStaffAuthor,
         ]);
 
         if (!$isAdmin) {

@@ -25,6 +25,18 @@ class Question extends Model
         'is_admin_answer' => 'boolean',
     ];
 
+    protected static function booted(): void
+    {
+        static::creating(function (Question $question): void {
+            $author = User::find($question->user_id);
+
+            if ($author?->isAdmin()) {
+                $question->is_approved = true;
+                $question->is_admin_answer = (bool) $question->parent_id;
+            }
+        });
+    }
+
     // Get the user who created the question/reply
     public function user()
     {

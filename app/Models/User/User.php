@@ -69,12 +69,12 @@ class User extends Authenticatable
 
     public function isAdmin(): bool
     {
-        return $this->role === 'admin';
+        return strtolower(trim((string) $this->role)) === 'admin';
     }
 
     public function isCoAdmin(): bool
     {
-        return $this->role === 'co-admin';
+        return strtolower(trim((string) $this->role)) === 'co-admin';
     }
 
     public function orders()

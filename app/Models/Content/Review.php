@@ -19,6 +19,21 @@ class Review extends Model
         'is_approved'
     ];
 
+    protected $casts = [
+        'is_approved' => 'boolean',
+    ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (Review $review): void {
+            $author = User::find($review->user_id);
+
+            if ($author?->isAdmin()) {
+                $review->is_approved = true;
+            }
+        });
+    }
+
     public function media()
     {
         return $this->hasMany(ReviewMedia::class);

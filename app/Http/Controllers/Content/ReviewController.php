@@ -70,13 +70,22 @@ class ReviewController extends Controller
             'files.*' => 'nullable|file|mimes:jpeg,png,jpg,mp4|max:10240',
         ]);
 
+        $user = $request->user();
+        $isReply = !empty($validated['parent_id']);
+        $isStaffAuthor = $user->isAdmin() ||
+            ($user->isCoAdmin() && $user->hasPermission('comments.reply'));
+
+        if ($isReply && $user->isCoAdmin() && !$user->hasPermission('comments.reply')) {
+            return response()->json(['message' => 'شما اجازه پاسخ به دیدگاه‌ها را ندارید.'], 403);
+        }
+
         $review = Review::create([
-            'user_id' => Auth::id(),
+            'user_id' => $user->id,
             'product_id' => $validated['product_id'],
             'parent_id' => $validated['parent_id'] ?? null,
             'rating' => $validated['rating'] ?? null,
             'comment' => $validated['comment'] ?? null,
-            'is_approved' => false,
+            'is_approved' => $isStaffAuthor,
         ]);
 
         if ($request->hasFile('files')) {
@@ -86,7 +95,7 @@ class ReviewController extends Controller
                     'file_path' => $path,
                     'file_type' => str_contains($file->getClientMimeType(), 'video') ? 'video' : 'image',
                     'disk' => 'public',
-                    'is_approved' => false,
+                    'is_approved' => $isStaffAuthor,
                 ]);
             }
         }
@@ -99,7 +108,7 @@ class ReviewController extends Controller
                 message: 'ادمین به دیدگاه شما پاسخ داده است.',
                 targetLink: '/my-account/user-interactions',
             );
-        } elseif (!$request->user()->isAdmin()) {
+        } elseif (!$user->isAdmin()) {
             $notifications->notifyAdmins(
                 type: 'user-interactions',
                 title: 'دیدگاه جدید',
@@ -117,7 +126,9 @@ class ReviewController extends Controller
         }
 
         return response()->json([
-            'message' => 'نظر شما با موفقیت ثبت شد و پس از تأیید ادمین نمایش داده می‌شود.',
+            'message' => $isStaffAuthor
+                ? 'پاسخ شما با موفقیت ثبت شد.'
+                : 'نظر شما با موفقیت ثبت شد و پس از تأیید ادمین نمایش داده می‌شود.',
             'review' => $review->load(['user:id,name', 'media'])
         ], 201);
     }
