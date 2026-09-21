@@ -55,4 +55,5 @@ class Product extends Model
     public function questions() { return $this->hasMany(Question::class); }
     public function category() { return $this->belongsTo(Category::class); }
     public function warranties() { return $this->belongsToMany(\App\Models\Product\Warranty::class, 'product_warranty')->withPivot('price', 'is_default')->withTimestamps(); }
+    public function wishlists() { return $this->hasMany(\App\Models\User\Wishlist::class); }
 }

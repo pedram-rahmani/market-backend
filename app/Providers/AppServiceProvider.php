@@ -4,7 +4,6 @@ namespace App\Providers;
 
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\File;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -26,14 +25,5 @@ class AppServiceProvider extends ServiceProvider
             return config('app.frontend_url')."/password-reset/$token?email={$notifiable->getEmailForPasswordReset()}";
         });
 
-        // symlink storage for liara
-        $publicStorage = public_path('storage');
-        $storageAppPublic = storage_path('app/public');
-
-        if (!File::exists($publicStorage)) {
-            if (File::exists($storageAppPublic)) {
-                File::link($storageAppPublic, $publicStorage);
-            }
-        }
     }
 }

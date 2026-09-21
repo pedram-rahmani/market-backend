@@ -14,6 +14,7 @@ use App\Http\Controllers\Content\ReviewController;
 use App\Http\Controllers\Content\QuestionController;
 use App\Http\Controllers\Content\TicketController;
 use App\Http\Controllers\User\PermissionController;
+use App\Http\Controllers\User\WishlistController;
 use App\Http\Controllers\General\ReportController;
 use App\Http\Controllers\General\NotificationController;
 use App\Http\Controllers\Order\OrderController;
@@ -57,6 +58,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/dashboard-stats', [DashboardController::class, 'index']);
     Route::get('/wallet', [WalletController::class, 'index']);
     Route::get('/user-permissions', [PermissionController::class, 'index']);
+    Route::get('/wishlist', [WishlistController::class, 'index']);
+    Route::get('/wishlist/{product}/status', [WishlistController::class, 'status']);
+    Route::post('/wishlist/{product}/toggle', [WishlistController::class, 'toggle']);
 
     // --- Orders (History & Management) ---
     Route::get('/user/orders', [OrderController::class, 'index']);

@@ -189,7 +189,7 @@ class ReviewController extends Controller
 
     public function adminIndex(Request $request)
     {
-        $reviews = Review::with(['user:id,name', 'product:id,name', 'media'])
+        $reviews = Review::with(['user:id,name,avatar', 'product:id,name', 'media'])
             ->latest()
             ->get();
 
