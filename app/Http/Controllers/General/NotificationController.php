@@ -21,16 +21,42 @@ class NotificationController extends Controller
     {
         $this->authorizeManagement();
 
+        $allUsersCount = User::query()->whereRaw("LOWER(TRIM(role)) != 'admin'")->count();
         $history = Notification::query()
             ->where('type', 'admin-message')
-            ->select('title', 'message', 'created_at', DB::raw('count(*) as recipient_count'))
-            ->groupBy('title', 'message', 'created_at')
-            ->orderByDesc('created_at')
-            ->limit(50)
-            ->get();
+            ->with('user:id,name,username')
+            ->latest()
+            ->get(['user_id', 'title', 'message', 'level', 'created_at'])
+            ->groupBy(fn (Notification $notification): string => implode('|', [
+                $notification->title,
+                $notification->message,
+                $notification->level ?? 'info',
+                $notification->created_at->toISOString(),
+            ]))
+            ->take(50)
+            ->map(function ($notifications) use ($allUsersCount): array {
+                $first = $notifications->first();
+                return [
+                    'title' => $first->title,
+                    'message' => $first->message,
+                    'level' => $first->level,
+                    'created_at' => $first->created_at,
+                    'recipient_count' => $notifications->count(),
+                    'send_to_all' => $notifications->count() === $allUsersCount,
+                    'recipients' => $notifications->map(fn (Notification $notification): array => [
+                        'name' => $notification->user->name,
+                        'username' => $notification->user->username,
+                    ])->values(),
+                ];
+            })
+            ->values();
 
         return response()->json([
-            'recipients' => User::query()->select('id', 'name', 'username', 'email')->orderBy('name')->get(),
+            'recipients' => User::query()
+                ->whereRaw("LOWER(TRIM(role)) != 'admin'")
+                ->select('id', 'name', 'username', 'email', 'role')
+                ->orderBy('name')
+                ->get(),
             'history' => $history,
         ]);
     }
@@ -42,6 +68,7 @@ class NotificationController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'message' => 'required|string|max:5000',
+            'level' => 'required|in:info,success,warning',
             'recipient_id' => 'nullable|integer|exists:users,id',
             'send_to_all' => 'sometimes|boolean',
         ]);
@@ -51,13 +78,14 @@ class NotificationController extends Controller
         }
 
         $recipientIds = !empty($validated['send_to_all'])
-            ? User::query()->pluck('id')
+            ? User::query()->whereRaw("LOWER(TRIM(role)) != 'admin'")->pluck('id')
             : collect([$validated['recipient_id']]);
 
         $now = now();
         Notification::insert($recipientIds->map(fn (int $recipientId) => [
             'user_id' => $recipientId,
             'type' => 'admin-message',
+            'level' => $validated['level'],
             'title' => $validated['title'],
             'message' => $validated['message'],
             'is_read' => false,
@@ -66,6 +94,19 @@ class NotificationController extends Controller
         ])->all());
 
         return response()->json(['message' => 'پیام با موفقیت ارسال شد.']);
+    }
+
+    public function destroyManagementHistory(): \Illuminate\Http\JsonResponse
+    {
+        $this->authorizeManagement();
+
+        $deleted = Notification::where('type', 'admin-message')->delete();
+
+        return response()->json([
+            'status' => 'success',
+            'deleted' => $deleted,
+            'message' => 'تاریخچه پیام‌های مدیریتی حذف شد.',
+        ]);
     }
 
     // List all notifications for apiResource (with optional type filtering and pagination)
@@ -143,11 +184,14 @@ class NotificationController extends Controller
     public function markAsRead(Request $request)
     {
         $userId = $request->user()->id;
+        $notificationId = $request->input('notification_id');
         $type = $request->input('type');
 
         $query = Notification::where('user_id', $userId)->where('is_read', false);
 
-        if ($type) {
+        if ($notificationId) {
+            $query->whereKey($notificationId);
+        } elseif ($type) {
             $query->where('type', $type);
         }
 
@@ -190,6 +234,17 @@ class NotificationController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => 'Notification deleted successfully.'
+        ]);
+    }
+
+    public function destroyAll(Request $request)
+    {
+        $deleted = Notification::where('user_id', $request->user()->id)->delete();
+
+        return response()->json([
+            'status' => 'success',
+            'deleted' => $deleted,
+            'message' => 'همه پیام‌های شما حذف شدند.',
         ]);
     }
 }

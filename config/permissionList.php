@@ -25,13 +25,12 @@ return [
 
     // User Interactions (Comments & Questions)
     'interactions.view' => 'مشاهده صفحه تعاملات کاربران',
-    'interactions.manage' => 'مدیریت تعاملات کاربران',
-    'comments.manage' => 'تایید، ویرایش یا حذف دیدگاه‌ها',
     'comments.approve' => 'تایید متن دیدگاه‌ها',
+    'comments.delete' => 'حذف دیدگاه‌ها',
     'comments.reply' => 'پاسخ به دیدگاه‌های کاربران',
     'comments.media.approve' => 'تایید فایل‌های دیدگاه‌ها',
-    'questions.manage' => 'پاسخ به سوالات کاربران',
     'questions.approve' => 'تایید پرسش‌های کاربران',
+    'questions.delete' => 'حذف پرسش‌ها و پاسخ‌ها',
     'questions.reply' => 'پاسخ به سوالات کاربران',
     'answers.approve' => 'تایید پاسخ‌های کاربران',
 

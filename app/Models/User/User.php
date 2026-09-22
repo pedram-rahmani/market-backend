@@ -59,7 +59,15 @@ class User extends Authenticatable
             $permissions = json_decode($permissions, true) ?? [];
         }
 
-        return in_array($permission, $permissions);
+        if (!is_array($permissions)) {
+            return false;
+        }
+
+        if (array_key_exists($permission, $permissions)) {
+            return (bool) $permissions[$permission];
+        }
+
+        return in_array($permission, $permissions, true);
     }
 
     public function hasRole($role): bool

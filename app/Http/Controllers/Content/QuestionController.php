@@ -8,6 +8,7 @@ use App\Models\Content\Question;
 use App\Models\Content\QuestionReaction;
 use Illuminate\Support\Facades\Auth;
 use App\Services\NotificationService;
+use Illuminate\Support\Facades\DB;
 
 class QuestionController extends Controller
 {
@@ -17,11 +18,11 @@ class QuestionController extends Controller
         $questions = Question::whereNull('parent_id')
             ->where('is_approved', true)
             ->with([
-                'user:id,name',
+                'user:id,name,role',
                 'product:id,name',
                 'replies' => function ($query) {
                     $query->where('is_approved', true)
-                        ->with('user:id,name')->withCount([
+                        ->with('user:id,name,role')->withCount([
                         'reactions as likes_count' => fn($q) => $q->where('type', 'like'),
                         'reactions as dislikes_count' => fn($q) => $q->where('type', 'dislike'),
                     ]);
@@ -53,10 +54,10 @@ class QuestionController extends Controller
     {
         $questions = Question::whereNull('parent_id')
             ->with([
-                'user:id,name',
+                'user:id,name,role',
                 'product:id,name',
                 'replies' => function ($query) {
-                    $query->with(['user:id,name', 'product:id,name'])
+                    $query->with(['user:id,name,role', 'product:id,name'])
                         ->latest();
                 }
             ])
@@ -76,7 +77,7 @@ class QuestionController extends Controller
             ->with([
                 'product:id,name',
                 'replies' => function ($query) {
-                    $query->with(['user:id,name', 'product:id,name'])->latest();
+                    $query->with(['user:id,name,role', 'product:id,name'])->latest();
                 }
             ])
             ->latest()
@@ -142,7 +143,7 @@ class QuestionController extends Controller
 
         return response()->json([
             'message' => 'پرسش/پاسخ شما با موفقیت ثبت شد.',
-            'question' => $question->load(['user:id,name'])
+            'question' => $question->load(['user:id,name,role'])
         ], 201);
     }
 
@@ -172,6 +173,13 @@ class QuestionController extends Controller
         return response()->json([
             'message' => 'مورد با موفقیت حذف شد.'
         ]);
+    }
+
+    public function destroyAll()
+    {
+        DB::table('questions')->delete();
+
+        return response()->json(['message' => 'تمام پرسش‌ها و پاسخ‌ها حذف شدند.']);
     }
 
     // Toggle approval status for admin panel

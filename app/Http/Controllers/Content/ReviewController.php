@@ -9,6 +9,7 @@ use App\Models\Content\Review;
 use App\Models\Content\ReviewMedia;
 use Illuminate\Support\Facades\Auth;
 use App\Services\NotificationService;
+use Illuminate\Support\Facades\DB;
 
 class ReviewController extends Controller
 {
@@ -18,13 +19,13 @@ class ReviewController extends Controller
             ->whereNull('parent_id')
             ->where('is_approved', true)
             ->with([
-                'user:id,name',
+                'user:id,name,role',
                 'media' => function ($query) {
                     $query->where('is_approved', true);
                 },
                 'replies' => function ($query) {
                     $query->where('is_approved', true)->with([
-                        'user:id,name',
+                        'user:id,name,role',
                         'media' => function ($q) {
                             $q->where('is_approved', true);
                         }
@@ -129,7 +130,7 @@ class ReviewController extends Controller
             'message' => $isStaffAuthor
                 ? 'پاسخ شما با موفقیت ثبت شد.'
                 : 'نظر شما با موفقیت ثبت شد و پس از تأیید ادمین نمایش داده می‌شود.',
-            'review' => $review->load(['user:id,name', 'media'])
+            'review' => $review->load(['user:id,name,role', 'media'])
         ], 201);
     }
 
@@ -163,6 +164,16 @@ class ReviewController extends Controller
         return response()->json([
             'message' => 'دیدگاه با موفقیت حذف شد.'
         ]);
+    }
+
+    public function destroyAll()
+    {
+        DB::transaction(function (): void {
+            ReviewMedia::query()->delete();
+            Review::query()->delete();
+        });
+
+        return response()->json(['message' => 'تمام دیدگاه‌ها و پاسخ‌ها حذف شدند.']);
     }
 
     public function toggleApproval(Review $review, NotificationService $notifications)
@@ -200,7 +211,15 @@ class ReviewController extends Controller
 
     public function adminIndex(Request $request)
     {
-        $reviews = Review::with(['user:id,name,avatar', 'product:id,name', 'media'])
+        $reviews = Review::whereNull('parent_id')
+            ->with([
+                'user:id,name,role,avatar',
+                'product:id,name',
+                'media',
+                'replies' => function ($query) {
+                    $query->with(['user:id,name,role,avatar', 'media'])->latest();
+                },
+            ])
             ->latest()
             ->get();
 

@@ -85,6 +85,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/notifications/by-type', [NotificationController::class, 'getNotificationsByType']);
     Route::get('/admin/notifications', [NotificationController::class, 'managementIndex']);
     Route::post('/admin/notifications', [NotificationController::class, 'sendManagementMessage']);
+    Route::delete('/admin/notifications', [NotificationController::class, 'destroyManagementHistory']);
+    Route::delete('/notifications', [NotificationController::class, 'destroyAll']);
     Route::apiResource('notifications', NotificationController::class)
         ->only(['index', 'show', 'destroy']);
 
@@ -92,6 +94,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/reviews', [ReviewController::class, 'store']);
     Route::put('/reviews/{review}', [ReviewController::class, 'update']);
     Route::delete('/reviews/{review}', [ReviewController::class, 'destroy']);
+    Route::delete('/admin/reviews', [ReviewController::class, 'destroyAll'])
+        ->middleware('can:comments.delete');
     Route::post('/reviews/{review}/react', [ReviewController::class, 'react']);
     Route::post('/reviews/{review}/report', [ReportController::class, 'storeReviewReport']);
 
@@ -99,6 +103,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/questions', [QuestionController::class, 'store']);
     Route::put('/questions/{question}', [QuestionController::class, 'update']);
     Route::delete('/questions/{question}', [QuestionController::class, 'destroy']);
+    Route::delete('/admin/questions', [QuestionController::class, 'destroyAll'])
+        ->middleware('can:questions.delete');
     Route::post('/questions/{question}/react', [QuestionController::class, 'react']);
 
     // --- Admin Review Management ---
