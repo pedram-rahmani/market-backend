@@ -78,6 +78,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/tickets/{ticket}', [TicketController::class, 'show']);
     Route::post('/tickets', [TicketController::class, 'store']);
     Route::post('/tickets/{ticket}/reply', [TicketController::class, 'reply']);
+    Route::delete('/tickets/{ticket}', [TicketController::class, 'destroy']);
 
     // --- Ticket Management (Admin / Co-admin) ---
     Route::get('/admin/tickets', [TicketController::class, 'adminIndex'])->middleware('can:tickets.view');

@@ -69,6 +69,18 @@ class TicketController extends Controller
         }
     }
 
+    // حذف تیکت (توسط صاحب تیکت یا کارمند دارای دسترسی tickets.delete)
+    public function destroy(Request $request, Ticket $ticket)
+    {
+        $this->authorizeAccess($request, $ticket, 'tickets.delete');
+
+        $ticket->delete();
+
+        return response()->json([
+            'message' => 'تیکت با موفقیت حذف شد.',
+        ]);
+    }
+
     // ثبت تیکت جدید به همراه اولین پیام
     public function store(Request $request, NotificationService $notifications)
     {

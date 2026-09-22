@@ -37,6 +37,7 @@ return [
     // Support & Tickets
     'tickets.view' => 'مشاهده تیکت‌های پشتیبانی',
     'tickets.reply' => 'پاسخ به تیکت‌های پشتیبانی',
+    'tickets.delete' => 'حذف تیکت‌های پشتیبانی',
 
     // Finance & Reporting
     'orders.view' => 'مشاهده سفارشات',
