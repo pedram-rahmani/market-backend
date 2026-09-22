@@ -40,7 +40,6 @@ class SettingSeeder extends Seeder
                     'items' => [
                         ['label' => 'درباره ما', 'url' => '/about-us'],
                         ['label' => 'تماس با ما', 'url' => '/contact-us'],
-                        ['label' => 'پشتیبانی / تیکت', 'url' => '/tickets'],
                     ]
                 ]
             ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),

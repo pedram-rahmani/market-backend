@@ -8,7 +8,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 
 use App\Models\Order\Order;
-use App\Models\Content\Ticket;
+use App\Models\Chat\ChatConversation;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class User extends Authenticatable
@@ -95,9 +95,9 @@ class User extends Authenticatable
         return $this->hasMany(Address::class);
     }
 
-    public function tickets()
+    public function chatConversation()
     {
-        return $this->hasMany(Ticket::class);
+        return $this->hasOne(ChatConversation::class);
     }
 
     public function wallet()

@@ -55,7 +55,7 @@ class NotificationService
         Notification::insert($notifications);
     }
 
-    // اطلاع‌رسانی به ادمین‌ها و co-adminهایی که دسترسی مشخصی دارند (مثلا tickets.view)
+    // اطلاع‌رسانی به ادمین‌ها و co-adminهایی که دسترسی مشخصی دارند (مثلا chats.view)
     public function notifyStaff(
         string $permission,
         string $type,

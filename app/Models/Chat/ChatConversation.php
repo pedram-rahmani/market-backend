@@ -1,20 +1,22 @@
 <?php
 
-namespace App\Models\Content;
+namespace App\Models\Chat;
 
 use App\Models\User\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Ticket extends Model
+class ChatConversation extends Model
 {
     protected $fillable = [
         'user_id',
-        'subject',
-        'department',
-        'priority',
         'status',
+        'last_message_at',
+    ];
+
+    protected $casts = [
+        'last_message_at' => 'datetime',
     ];
 
     public function user(): BelongsTo
@@ -24,6 +26,6 @@ class Ticket extends Model
 
     public function messages(): HasMany
     {
-        return $this->hasMany(TicketMessage::class);
+        return $this->hasMany(ChatMessage::class, 'conversation_id');
     }
 }

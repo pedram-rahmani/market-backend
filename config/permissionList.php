@@ -34,10 +34,10 @@ return [
     'questions.reply' => 'پاسخ به سوالات کاربران',
     'answers.approve' => 'تایید پاسخ‌های کاربران',
 
-    // Support & Tickets
-    'tickets.view' => 'مشاهده تیکت‌های پشتیبانی',
-    'tickets.reply' => 'پاسخ به تیکت‌های پشتیبانی',
-    'tickets.delete' => 'حذف تیکت‌های پشتیبانی',
+    // Support & Live Chat
+    'chats.view' => 'مشاهده گفتگوهای پشتیبانی',
+    'chats.reply' => 'پاسخ به گفتگوهای پشتیبانی',
+    'chats.delete' => 'حذف گفتگوهای پشتیبانی',
 
     // Finance & Reporting
     'orders.view' => 'مشاهده سفارشات',

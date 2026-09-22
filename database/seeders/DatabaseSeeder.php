@@ -16,7 +16,6 @@ class DatabaseSeeder extends Seeder
             QuestionSeeder::class,
             ProductIntroductionSeeder::class,
             WalletSeeder::class,
-            TicketSeeder::class,
             OrderSeeder::class,
             SettingSeeder::class,
             WarrantySeeder::class,

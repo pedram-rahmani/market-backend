@@ -13,7 +13,9 @@ class DashboardController extends Controller
         $user = Auth::user();
 
         $orderCount = $user->orders()->count();
-        $ticketCount = $user->tickets()->where('status', 'active')->count();
+        $unreadChatCount = $user->chatConversation
+            ? $user->chatConversation->messages()->where('user_id', '!=', $user->id)->where('is_read', false)->count()
+            : 0;
         $walletBalance = $user->wallet ? $user->wallet->balance : 0;
 
         // get last ( 5 ) transactions
@@ -23,7 +25,7 @@ class DashboardController extends Controller
 
         return response()->json([
             'order_count'         => $orderCount,
-            'ticket_count'        => $ticketCount,
+            'unread_chat_count'   => $unreadChatCount,
             'wallet_balance'      => $walletBalance,
             'latest_transactions' => $latestTransactions,
         ]);

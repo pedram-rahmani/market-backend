@@ -12,7 +12,7 @@ use App\Http\Controllers\Product\ProductFeatureController;
 use App\Http\Controllers\Product\WarrantyController;
 use App\Http\Controllers\Content\ReviewController;
 use App\Http\Controllers\Content\QuestionController;
-use App\Http\Controllers\Content\TicketController;
+use App\Http\Controllers\Content\ChatController;
 use App\Http\Controllers\User\PermissionController;
 use App\Http\Controllers\User\WishlistController;
 use App\Http\Controllers\General\ReportController;
@@ -73,16 +73,17 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Admin CRUD for Coupons
     Route::apiResource('admin/coupons', CouponController::class);
 
-    // --- Support Tickets ---
-    Route::get('/tickets', [TicketController::class, 'index']);
-    Route::get('/tickets/{ticket}', [TicketController::class, 'show']);
-    Route::post('/tickets', [TicketController::class, 'store']);
-    Route::post('/tickets/{ticket}/reply', [TicketController::class, 'reply']);
-    Route::delete('/tickets/{ticket}', [TicketController::class, 'destroy']);
+    // --- Live Chat (Current User) ---
+    Route::get('/chat/conversation', [ChatController::class, 'index']);
+    Route::post('/chat/messages', [ChatController::class, 'store']);
+    Route::delete('/chat/conversations/{conversation}', [ChatController::class, 'destroy']);
 
-    // --- Ticket Management (Admin / Co-admin) ---
-    Route::get('/admin/tickets', [TicketController::class, 'adminIndex'])->middleware('can:tickets.view');
-    Route::patch('/admin/tickets/{ticket}/status', [TicketController::class, 'updateStatus'])->middleware('can:tickets.reply');
+    // --- Chat Management (Admin / Co-admin) ---
+    Route::get('/admin/chats', [ChatController::class, 'adminIndex'])->middleware('can:chats.view');
+    Route::get('/admin/chats/{conversation}', [ChatController::class, 'show'])->middleware('can:chats.view');
+    Route::post('/admin/chats/{conversation}/messages', [ChatController::class, 'reply'])->middleware('can:chats.reply');
+    Route::patch('/admin/chats/{conversation}/status', [ChatController::class, 'updateStatus'])->middleware('can:chats.reply');
+    Route::delete('/admin/chats/{conversation}', [ChatController::class, 'destroy'])->middleware('can:chats.delete');
 
     // --- Notifications (Fixed Order) ---
     Route::get('/notifications/counts', [NotificationController::class, 'getUnreadCounts']);
