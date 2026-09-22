@@ -79,6 +79,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/tickets', [TicketController::class, 'store']);
     Route::post('/tickets/{ticket}/reply', [TicketController::class, 'reply']);
 
+    // --- Ticket Management (Admin / Co-admin) ---
+    Route::get('/admin/tickets', [TicketController::class, 'adminIndex'])->middleware('can:tickets.view');
+    Route::patch('/admin/tickets/{ticket}/status', [TicketController::class, 'updateStatus'])->middleware('can:tickets.reply');
+
     // --- Notifications (Fixed Order) ---
     Route::get('/notifications/counts', [NotificationController::class, 'getUnreadCounts']);
     Route::post('/notifications/mark-as-read', [NotificationController::class, 'markAsRead']);

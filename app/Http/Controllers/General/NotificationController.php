@@ -151,6 +151,7 @@ class NotificationController extends Controller
             'dashboard' => $rawCounts['dashboard'] ?? 0,
             'purchases' => $rawCounts['purchases'] ?? 0,
             'support' => $rawCounts['support'] ?? 0,
+            'ticket-management' => $rawCounts['ticket-management'] ?? 0,
             'settings' => $rawCounts['settings'] ?? 0,
         ];
 

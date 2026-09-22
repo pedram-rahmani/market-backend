@@ -17,6 +17,58 @@ class TicketController extends Controller
         return response()->json($tickets);
     }
 
+    // دریافت لیست تمام تیکت‌ها برای ادمین/co-admin دارای دسترسی tickets.view
+    public function adminIndex(Request $request)
+    {
+        $query = Ticket::with(['user:id,name,username', 'messages.user:id,name,username'])->latest();
+
+        if ($status = $request->input('status')) {
+            $query->where('status', $status);
+        }
+
+        return response()->json($query->get());
+    }
+
+    // نمایش جزئیات یک تیکت (صاحب تیکت یا کارمند دارای دسترسی tickets.view)
+    public function show(Request $request, Ticket $ticket)
+    {
+        $this->authorizeAccess($request, $ticket, 'tickets.view');
+
+        return response()->json(
+            $ticket->load(['user:id,name,username', 'messages.user:id,name,username'])
+        );
+    }
+
+    // تغییر وضعیت تیکت توسط ادمین/co-admin دارای دسترسی tickets.reply
+    public function updateStatus(Request $request, Ticket $ticket)
+    {
+        if (!$request->user()->hasPermission('tickets.reply')) {
+            abort(403, 'دسترسی غیرمجاز');
+        }
+
+        $validated = $request->validate([
+            'status' => 'required|in:open,pending,closed',
+        ]);
+
+        $ticket->update(['status' => $validated['status']]);
+
+        return response()->json([
+            'message' => 'وضعیت تیکت به‌روزرسانی شد.',
+            'ticket' => $ticket->fresh(['user:id,name,username', 'messages.user:id,name,username']),
+        ]);
+    }
+
+    // بررسی دسترسی کاربر به یک تیکت مشخص (مالک تیکت یا کارمند دارای دسترسی)
+    private function authorizeAccess(Request $request, Ticket $ticket, string $staffPermission): void
+    {
+        $user = $request->user();
+        $isOwner = $ticket->user_id === $user->id;
+
+        if (!$isOwner && !$user->hasPermission($staffPermission)) {
+            abort(403, 'دسترسی غیرمجاز');
+        }
+    }
+
     // ثبت تیکت جدید به همراه اولین پیام
     public function store(Request $request, NotificationService $notifications)
     {
@@ -41,11 +93,12 @@ class TicketController extends Controller
             'message' => $validated['message'],
         ]);
 
-        $notifications->notifyAdmins(
-            type: 'support',
+        $notifications->notifyStaff(
+            permission: 'tickets.view',
+            type: 'ticket-management',
             title: 'تیکت پشتیبانی جدید',
             message: "تیکت جدیدی از طرف {$request->user()->name} ثبت شد.",
-            targetLink: '/my-account/support',
+            targetLink: '/my-account/ticket-management',
             exceptUserId: $request->user()->id,
         );
 
@@ -62,6 +115,8 @@ class TicketController extends Controller
         NotificationService $notifications
     )
     {
+        $this->authorizeAccess($request, $ticket, 'tickets.reply');
+
         $validated = $request->validate([
             'message' => 'required|string',
         ]);
@@ -72,15 +127,14 @@ class TicketController extends Controller
             'message' => $validated['message'],
         ]);
 
-        if (!$request->user()->isAdmin()) {
-            $notifications->notifyAdmins(
-                type: 'support',
-                title: 'پاسخ جدید به تیکت',
-                message: "پاسخ جدیدی از طرف {$request->user()->name} در یک تیکت ثبت شد.",
-                targetLink: '/my-account/support',
-                exceptUserId: $request->user()->id,
-            );
-        } else {
+        $isStaffReply = $ticket->user_id !== $request->user()->id;
+
+        if ($isStaffReply) {
+            // اگر تیکت قبلا بسته شده بود، پاسخ کارمند آن را دوباره باز می‌کند
+            if ($ticket->status === 'closed') {
+                $ticket->update(['status' => 'open']);
+            }
+
             $notifications->notifyUser(
                 userId: $ticket->user_id,
                 type: 'support',
@@ -88,11 +142,20 @@ class TicketController extends Controller
                 message: 'پاسخ جدیدی از طرف پشتیبانی برای تیکت شما ثبت شده است.',
                 targetLink: '/my-account/support',
             );
+        } else {
+            $notifications->notifyStaff(
+                permission: 'tickets.view',
+                type: 'ticket-management',
+                title: 'پاسخ جدید به تیکت',
+                message: "پاسخ جدیدی از طرف {$request->user()->name} در یک تیکت ثبت شد.",
+                targetLink: '/my-account/ticket-management',
+                exceptUserId: $request->user()->id,
+            );
         }
 
         return response()->json([
             'message' => 'پاسخ با موفقیت ارسال شد.',
-            'data' => $message
+            'data' => $message->load('user:id,name,username')
         ], 201);
     }
 }
