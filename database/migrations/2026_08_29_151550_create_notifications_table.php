@@ -12,6 +12,7 @@ return new class extends Migration
             $table->id()->comment('شناسه یکتا');
             $table->foreignId('user_id')->constrained()->onDelete('cascade')->comment('آی‌دی کاربر دریافت‌کننده نوتیفیکیشن');
             $table->string('type')->comment('نوع نوتیفیکیشن برای تفکیک در سایدبار مثل user-interactions یا support');
+            $table->string('level')->nullable()->after('type')->comment('سطح اهمیت نوتیفیکیشن');
             $table->string('title')->comment('عنوان نوتیفیکیشن');
             $table->text('message')->comment('متن یا پیام نوتیفیکیشن');
             $table->string('target_link')->nullable()->comment('لینک مقصد برای هدایت کاربر هنگام کلیک');

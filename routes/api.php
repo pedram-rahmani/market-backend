@@ -56,8 +56,16 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/dashboard-stats', [DashboardController::class, 'index']);
+
+    // --- Wallet ---
     Route::get('/wallet', [WalletController::class, 'index']);
+    Route::post('/wallet/deposit', [WalletController::class, 'deposit']);
+    Route::post('/wallet/withdraw', [WalletController::class, 'withdraw']);
+
+    // --- User Permissions ---
     Route::get('/user-permissions', [PermissionController::class, 'index']);
+
+    // --- Wishlist ---
     Route::get('/wishlist', [WishlistController::class, 'index']);
     Route::get('/wishlist/{product}/status', [WishlistController::class, 'status']);
     Route::post('/wishlist/{product}/toggle', [WishlistController::class, 'toggle']);

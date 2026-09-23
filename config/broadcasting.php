@@ -7,10 +7,10 @@ return [
     | Default Broadcaster
     |--------------------------------------------------------------------------
     |
-    | این مقدار مشخص می‌کند کدام درایور بردکست به‌عنوان پیش‌فرض استفاده شود.
-    | چون روی هاست فعلی (لیارا) هیچ queue worker مجزایی اجرا نمی‌شود، از
-    | Pusher به همراه ShouldBroadcastNow استفاده می‌شود تا رویدادها بلافاصله
-    | و بدون نیاز به صف ارسال شوند.
+    | This option controls the default broadcaster that will be used by the
+    | framework. Since there is no separate queue worker running on the current
+    | hosting environment (Liara), Pusher along with ShouldBroadcastNow is used
+    | so events are dispatched immediately without needing a queue.
     |
     */
 
@@ -38,7 +38,7 @@ return [
                 'useTLS' => env('PUSHER_SCHEME', 'https') === 'https',
             ],
             'client_options' => [
-                // مقادیر اضافه برای کلاینت گوزل (Guzzle) در صورت نیاز
+                // Guzzle client options if needed
             ],
         ],
 

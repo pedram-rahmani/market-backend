@@ -9,21 +9,46 @@ use App\Events\ChatMessageSent;
 use App\Events\ChatConversationUpdated;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
+use Exception;
 
 class ChatController extends Controller
 {
-    // دریافت گفتگوی کاربر جاری (در صورت نبود، ساخته می‌شود) به همراه پیام‌ها
+    // Retrieve the current user's active conversation (or latest one) along with messages
     public function index(Request $request)
     {
         $user = $request->user();
-        $conversation = ChatConversation::firstOrCreate(
-            ['user_id' => $user->id],
-            ['status' => 'open']
-        );
 
-        $conversation->load(['messages' => fn ($query) => $query->with('user:id,name,username,role')->oldest()]);
+        // dont open support chat for admins/staff
+        if ($user->hasPermission('chats.view') || $user->hasPermission('chats.reply')) {
+            return response()->json([
+                'message' => 'ادمین‌ها نیاز به چت پشتیبانی شخصی ندارند.',
+                'messages' => []
+            ]);
+        }
 
-        // پیام‌های ارسال‌شده توسط کارمندان را خوانده‌شده علامت‌گذاری می‌کنیم
+        // Find the user's latest open conversation
+        $conversation = ChatConversation::where('user_id', $user->id)
+            ->where('status', 'open')
+            ->latest()
+            ->first();
+
+        // If no open conversation exists, create a new one
+        if (!$conversation) {
+            $conversation = ChatConversation::create([
+                'user_id' => $user->id,
+                'status' => 'open',
+            ]);
+        }
+
+        $conversation->load([
+            'messages' => fn ($query) => $query->with('user:id,name,username,role')
+                ->latest()
+                ->take(50)
+                ->get()
+                ->sortBy('created_at')
+        ]);
+
+        // Mark messages sent by staff as read
         ChatMessage::where('conversation_id', $conversation->id)
             ->where('user_id', '!=', $user->id)
             ->where('is_read', false)
@@ -32,21 +57,27 @@ class ChatController extends Controller
         return response()->json($conversation);
     }
 
-    // ارسال پیام جدید توسط کاربر جاری در گفتگوی خودش
+    // Creates a new conversation if the previous one was closed
     public function store(Request $request, NotificationService $notifications)
     {
         $validated = $request->validate([
-            'message' => 'required|string|max:2000',
+            'message' => 'required|string|max:5000',
         ]);
 
         $user = $request->user();
-        $conversation = ChatConversation::firstOrCreate(
-            ['user_id' => $user->id],
-            ['status' => 'open']
-        );
 
-        if ($conversation->status === 'closed') {
-            $conversation->update(['status' => 'open']);
+        // Check if the user has an open conversation
+        $conversation = ChatConversation::where('user_id', $user->id)
+            ->where('status', 'open')
+            ->latest()
+            ->first();
+
+        // If no open conversation exists or the latest one is closed, create a brand new conversation
+        if (!$conversation || $conversation->status === 'closed') {
+            $conversation = ChatConversation::create([
+                'user_id' => $user->id,
+                'status' => 'open',
+            ]);
         }
 
         $message = ChatMessage::create([
@@ -57,24 +88,34 @@ class ChatController extends Controller
 
         $conversation->update(['last_message_at' => now()]);
 
-        broadcast(new ChatMessageSent($message));
-        broadcast(new ChatConversationUpdated($conversation->fresh()));
+        // Safely trigger broadcasting to prevent 500 errors if broadcasting/queue fails on hosting
+        try {
+            broadcast(new ChatMessageSent($message));
+            broadcast(new ChatConversationUpdated($conversation->fresh()));
+        } catch (Exception $e) {
+            // broadcasting error
+        }
 
-        $notifications->notifyStaff(
-            permission: 'chats.view',
-            type: 'chat-management',
-            title: 'پیام جدید در گفتگوی پشتیبانی',
-            message: "پیام جدیدی از طرف {$user->name} دریافت شد.",
-            targetLink: '/my-account/chat-management',
-            exceptUserId: $user->id,
-        );
+        try {
+            $notifications->notifyStaff(
+                permission: 'chats.view',
+                type: 'chat-management',
+                title: 'پیام جدید در گفتگوی پشتیبانی',
+                message: "پیام جدیدی از طرف {$user->name} دریافت شد.",
+                targetLink: '/my-account/chat-management',
+                exceptUserId: $user->id,
+            );
+        } catch (Exception $e) {
+            // notification error
+        }
 
         return response()->json([
             'message' => $message->load('user:id,name,username,role'),
+            'conversation_id' => $conversation->id,
         ], 201);
     }
 
-    // لیست تمام گفتگوها برای ادمین/کارمند دارای دسترسی chats.view
+    // List all conversations for admin/staff with chats.view permission
     public function adminIndex(Request $request)
     {
         $conversations = ChatConversation::with(['user:id,name,username'])
@@ -89,7 +130,7 @@ class ChatController extends Controller
         return response()->json($conversations);
     }
 
-    // نمایش یک گفتگوی مشخص برای ادمین/کارمند دارای دسترسی chats.view
+    // Show a specific conversation for admin/staff with chats.view permission
     public function show(Request $request, ChatConversation $conversation)
     {
         if (!$request->user()->hasPermission('chats.view')) {
@@ -106,7 +147,7 @@ class ChatController extends Controller
         return response()->json($conversation);
     }
 
-    // ارسال پاسخ توسط کارمند دارای دسترسی chats.reply به یک گفتگوی مشخص
+    // Reply to a specific conversation by staff with chats.reply permission
     public function reply(Request $request, ChatConversation $conversation)
     {
         if (!$request->user()->hasPermission('chats.reply')) {
@@ -114,7 +155,7 @@ class ChatController extends Controller
         }
 
         $validated = $request->validate([
-            'message' => 'required|string|max:2000',
+            'message' => 'required|string|max:5000',
         ]);
 
         $user = $request->user();
@@ -127,15 +168,19 @@ class ChatController extends Controller
 
         $conversation->update(['last_message_at' => now()]);
 
-        broadcast(new ChatMessageSent($message));
-        broadcast(new ChatConversationUpdated($conversation->fresh()));
+        try {
+            broadcast(new ChatMessageSent($message));
+            broadcast(new ChatConversationUpdated($conversation->fresh()));
+        } catch (Exception $e) {
+            // broadcasting error
+        }
 
         return response()->json([
             'message' => $message->load('user:id,name,username,role'),
         ], 201);
     }
 
-    // تغییر وضعیت گفتگو (باز/بسته) توسط کارمند دارای دسترسی chats.reply
+    // Update conversation status (open/closed) by staff with chats.reply permission
     public function updateStatus(Request $request, ChatConversation $conversation)
     {
         if (!$request->user()->hasPermission('chats.reply')) {
@@ -148,7 +193,11 @@ class ChatController extends Controller
 
         $conversation->update(['status' => $validated['status']]);
 
-        broadcast(new ChatConversationUpdated($conversation->fresh()));
+        try {
+            broadcast(new ChatConversationUpdated($conversation->fresh()));
+        } catch (Exception $e) {
+            // broadcasting error
+        }
 
         return response()->json([
             'message' => 'وضعیت گفتگو به‌روزرسانی شد.',
@@ -156,7 +205,7 @@ class ChatController extends Controller
         ]);
     }
 
-    // حذف گفتگو (توسط صاحب گفتگو یا کارمند دارای دسترسی chats.delete)
+    // Delete conversation by conversation owner or staff with chats.delete permission
     public function destroy(Request $request, ChatConversation $conversation)
     {
         $user = $request->user();

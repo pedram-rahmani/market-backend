@@ -12,7 +12,7 @@ The REST API for the Marketplace project. It is built with Laravel and provides 
 - Reviews and review media with reactions, reports, and moderation
 - Product questions with reactions and moderation
 - Coupons and user coupon assignments
-- Support tickets and ticket replies
+- Real-time live chat and messaging with WebSockets
 - Notifications and admin messaging
 - Role and permission management with `spatie/laravel-permission`
 - User management, profile updates, soft-deleted user restoration, and account permissions
@@ -89,7 +89,7 @@ php artisan test
 
 ## API overview
 
-Public endpoints include products, categories, filters, warranties, settings, authentication, reviews, and questions. Authenticated endpoints include the user dashboard, orders, wallet, tickets, notifications, reviews, questions, coupons, and management resources. The complete route definitions are in [`routes/api.php`](routes/api.php).
+Public endpoints include products, categories, filters, warranties, settings, authentication, reviews, and questions. Authenticated endpoints include the user dashboard, orders, wallet, live chat, notifications, reviews, questions, coupons, and management resources. The complete route definitions are in [`routes/api.php`](routes/api.php).
 
 ## Deployment
 
