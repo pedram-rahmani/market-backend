@@ -93,8 +93,8 @@ Public endpoints include products, categories, filters, warranties, settings, au
 
 ## Deployment
 
-- [Backend API](https://my-market-backend.liara.run/)
-- [Marketplace frontend](https://my-market-frontend.liara.run/)
+- [Backend API](https://api.pashm-store.ir)
+- [Marketplace frontend](https://pashm-store.ir)
 
 ## Related documentation
 

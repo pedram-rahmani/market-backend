@@ -9,8 +9,8 @@ return [
     'allowed_origins' => [
         'http://localhost:3000',
         'http://127.0.0.1:3000',
-        'http://192.168.1.200:3000',
-        'https://my-market-frontend.liara.run',
+        'https://pashm-store.ir',
+        'https://www.pashm-store.ir',
     ],
 
     'allowed_origins_patterns' => [],
