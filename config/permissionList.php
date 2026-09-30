@@ -23,6 +23,10 @@ return [
     'categories.edit' => 'ویرایش دسته‌بندی',
     'categories.delete' => 'حذف دسته‌بندی',
 
+    // Discount Management
+    'discounts.view' => 'مشاهده کدهای تخفیف',
+    'discounts.manage' => 'مدیریت کدهای تخفیف (افزودن، ویرایش، حذف)',
+
     // User Interactions (Comments & Questions)
     'interactions.view' => 'مشاهده صفحه تعاملات کاربران',
     'comments.approve' => 'تایید متن دیدگاه‌ها',

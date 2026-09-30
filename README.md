@@ -1,6 +1,6 @@
-# Marketplace Backend
+# Market Backend
 
-The REST API for the Marketplace project. It is built with Laravel and provides authentication, catalog management, user accounts, orders, reviews, support, notifications, and administration features for the [market-frontend repository](https://github.com/pedram-rahmani/market-frontend).
+The REST API for the Market project. It is built with Laravel and provides authentication, catalog management, user accounts, orders, reviews, support, notifications, and administration features for the [market-frontend repository](https://github.com/pedram-rahmani/market-frontend).
 
 ## Features
 
@@ -94,7 +94,7 @@ Public endpoints include products, categories, filters, warranties, settings, au
 ## Deployment
 
 - [Backend API](https://api.pashm-store.ir)
-- [Marketplace frontend](https://pashm-store.ir)
+- [Market frontend](https://pashm-store.ir)
 
 ## Related documentation
 
