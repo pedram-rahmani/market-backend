@@ -161,5 +161,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::apiResource('products', ProductController::class)->except(['index', 'show', 'edit']);
 
-    Route::post('/settings', [SettingController::class, 'update']);
+    // --- General Settings (Secured with Edit Permission) ---
+    Route::post('/settings', [SettingController::class, 'update'])
+        ->middleware('can:settings.edit');
 });
