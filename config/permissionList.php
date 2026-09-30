@@ -49,6 +49,7 @@ return [
     'financial.reports' => 'مشاهده گزارشات مالی و درآمد',
 
     // System Settings
+    'settings.view' => 'مشاهده تنظیمات سایت',
     'settings.edit' => 'تغییر تنظیمات سایت',
     'notifications.manage' => 'ارسال و مدیریت پیام‌ها',
 ];
