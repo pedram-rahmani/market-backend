@@ -19,12 +19,32 @@ use App\Http\Controllers\General\ReportController;
 use App\Http\Controllers\General\NotificationController;
 use App\Http\Controllers\Order\OrderController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 
 /*
 |--------------------------------------------------------------------------
 | Public Routes
 |--------------------------------------------------------------------------
 */
+
+Route::get('/storage/{path}', function (string $path) {
+    $path = str_replace('\\', '/', $path);
+
+    abort_if(
+        str_contains($path, '..') || str_starts_with($path, '/'),
+        404
+    );
+
+    foreach (['public', 'storage'] as $diskName) {
+        $disk = Storage::disk($diskName);
+
+        if ($disk->exists($path)) {
+            return response()->file($disk->path($path));
+        }
+    }
+
+    abort(404);
+})->where('path', '.*');
 
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/product-filters', [ProductController::class, 'getFilters']);
