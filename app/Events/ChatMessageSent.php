@@ -9,7 +9,6 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-// این رویداد بلافاصله (بدون صف) از طریق Pusher به کانال گفتگو و کانال مدیریت گفتگوها ارسال می‌شود
 class ChatMessageSent implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;

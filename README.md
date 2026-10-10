@@ -68,6 +68,25 @@ The default local configuration uses SQLite. Ensure `database/database.sqlite` e
 php artisan serve
 ```
 
+## Run Reverb
+
+Realtime chat uses Laravel Reverb and `ShouldBroadcastNow`, so it does not need a
+queue worker for message delivery. Reverb must still run as a separate,
+long-lived Liara service; it cannot be started inside a short-lived HTTP
+request:
+
+```bash
+php artisan reverb:start --host=0.0.0.0 --port=8080
+```
+
+Set the API service environment to `BROADCAST_CONNECTION=reverb` and configure
+`REVERB_APP_ID`, `REVERB_APP_KEY`, `REVERB_APP_SECRET`, `REVERB_HOST`,
+`REVERB_PORT=443`, and `REVERB_SCHEME=https`. The public WebSocket hostname
+(`REVERB_HOST`) must proxy `wss` traffic to the Reverb service port `8080`.
+The frontend must use the same app key and public hostname through
+`NEXT_PUBLIC_REVERB_*`. If the proxy does not support WebSockets, the HTTP API
+will still work but live updates cannot be delivered.
+
 The API will be available at `http://127.0.0.1:8000`. The frontend should use:
 
 ```env

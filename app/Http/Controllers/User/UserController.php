@@ -87,6 +87,29 @@ class UserController extends Controller
         }
 
         $allowedPermissions = array_keys(config('permissionList', []));
+        $legacyPermissionMap = [
+            'users.create' => 'users.manage',
+            'users.edit' => 'users.manage',
+            'users.delete' => 'users.manage',
+            'users.restore' => 'users.manage',
+            'products.create' => 'products.manage',
+            'products.edit' => 'products.manage',
+            'products.delete' => 'products.manage',
+            'categories.create' => 'categories.manage',
+            'categories.edit' => 'categories.manage',
+            'categories.delete' => 'categories.manage',
+            'chats.view' => ['chats.list', 'chats.read'],
+        ];
+
+        if (is_array($request->input('permissions'))) {
+            $normalizedPermissions = collect($request->input('permissions'))
+                ->flatMap(fn (string $permission) => $legacyPermissionMap[$permission] ?? $permission)
+                ->unique()
+                ->values()
+                ->all();
+
+            $request->merge(['permissions' => $normalizedPermissions]);
+        }
 
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',

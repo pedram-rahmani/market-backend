@@ -8,7 +8,6 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-// این رویداد برای آپدیت لایو لیست گفتگوها در صفحه‌ی مدیریت گفتگوهای ادمین استفاده می‌شود
 class ChatConversationUpdated implements ShouldBroadcastNow
 {
     use Dispatchable, SerializesModels;

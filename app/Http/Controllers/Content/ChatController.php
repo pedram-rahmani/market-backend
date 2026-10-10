@@ -9,6 +9,7 @@ use App\Events\ChatMessageSent;
 use App\Events\ChatConversationUpdated;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Exception;
 
 class ChatController extends Controller
@@ -19,7 +20,12 @@ class ChatController extends Controller
         $user = $request->user();
 
         // dont open support chat for admins/staff
-        if ($user->hasPermission('chats.view') || $user->hasPermission('chats.reply')) {
+        if (
+            $user->hasPermission('chats.list')
+            || $user->hasPermission('chats.read')
+            || $user->hasPermission('chats.reply')
+            || $user->hasPermission('chats.close')
+        ) {
             return response()->json([
                 'message' => 'ادمین‌ها نیاز به چت پشتیبانی شخصی ندارند.',
                 'messages' => []
@@ -93,12 +99,15 @@ class ChatController extends Controller
             broadcast(new ChatMessageSent($message));
             broadcast(new ChatConversationUpdated($conversation->fresh()));
         } catch (Exception $e) {
-            // broadcasting error
+            Log::warning('Chat message broadcast failed.', [
+                'conversation_id' => $conversation->id,
+                'exception' => $e,
+            ]);
         }
 
         try {
             $notifications->notifyStaff(
-                permission: 'chats.view',
+                permission: 'chats.list',
                 type: 'chat-management',
                 title: 'پیام جدید در گفتگوی پشتیبانی',
                 message: "پیام جدیدی از طرف {$user->name} دریافت شد.",
@@ -106,7 +115,10 @@ class ChatController extends Controller
                 exceptUserId: $user->id,
             );
         } catch (Exception $e) {
-            // notification error
+            Log::warning('New chat notification failed.', [
+                'conversation_id' => $conversation->id,
+                'exception' => $e,
+            ]);
         }
 
         return response()->json([
@@ -115,7 +127,7 @@ class ChatController extends Controller
         ], 201);
     }
 
-    // List all conversations for admin/staff with chats.view permission
+    // List all conversations for admin/staff with chats.list permission
     public function adminIndex(Request $request)
     {
         $conversations = ChatConversation::with(['user:id,name,username'])
@@ -130,10 +142,10 @@ class ChatController extends Controller
         return response()->json($conversations);
     }
 
-    // Show a specific conversation for admin/staff with chats.view permission
+    // Show a specific conversation for admin/staff with chats.read permission
     public function show(Request $request, ChatConversation $conversation)
     {
-        if (!$request->user()->hasPermission('chats.view')) {
+        if (!$request->user()->hasPermission('chats.read')) {
             abort(403, 'دسترسی غیرمجاز');
         }
 
@@ -172,7 +184,10 @@ class ChatController extends Controller
             broadcast(new ChatMessageSent($message));
             broadcast(new ChatConversationUpdated($conversation->fresh()));
         } catch (Exception $e) {
-            // broadcasting error
+            Log::warning('Chat reply broadcast failed.', [
+                'conversation_id' => $conversation->id,
+                'exception' => $e,
+            ]);
         }
 
         return response()->json([
@@ -180,10 +195,10 @@ class ChatController extends Controller
         ], 201);
     }
 
-    // Update conversation status (open/closed) by staff with chats.reply permission
+    // Update conversation status (open/closed) by staff with chats.close permission
     public function updateStatus(Request $request, ChatConversation $conversation)
     {
-        if (!$request->user()->hasPermission('chats.reply')) {
+        if (!$request->user()->hasPermission('chats.close')) {
             abort(403, 'دسترسی غیرمجاز');
         }
 
@@ -196,7 +211,10 @@ class ChatController extends Controller
         try {
             broadcast(new ChatConversationUpdated($conversation->fresh()));
         } catch (Exception $e) {
-            // broadcasting error
+            Log::warning('Chat status broadcast failed.', [
+                'conversation_id' => $conversation->id,
+                'exception' => $e,
+            ]);
         }
 
         return response()->json([
@@ -205,7 +223,7 @@ class ChatController extends Controller
         ]);
     }
 
-    // Delete conversation by conversation owner or staff with chats.delete permission
+    // Users may delete their own conversation; staff require the explicit delete permission.
     public function destroy(Request $request, ChatConversation $conversation)
     {
         $user = $request->user();

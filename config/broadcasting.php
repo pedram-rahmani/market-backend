@@ -14,7 +14,7 @@ return [
     |
     */
 
-    'default' => env('BROADCAST_CONNECTION', 'log'),
+    'default' => env('BROADCAST_CONNECTION', 'reverb'),
 
     /*
     |--------------------------------------------------------------------------

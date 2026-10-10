@@ -67,7 +67,23 @@ class User extends Authenticatable
             return (bool) $permissions[$permission];
         }
 
-        return in_array($permission, $permissions, true);
+        if (in_array($permission, $permissions, true)) {
+            return true;
+        }
+
+        // Keep permissions saved before the management permissions were consolidated.
+        $legacyAliases = [
+            'users.manage' => ['users.create', 'users.edit', 'users.delete', 'users.restore'],
+            'products.manage' => ['products.create', 'products.edit', 'products.delete'],
+            'categories.manage' => ['categories.create', 'categories.edit', 'categories.delete'],
+            'chats.list' => ['chats.view'],
+            'chats.read' => ['chats.view'],
+        ];
+
+        return collect($legacyAliases[$permission] ?? [])
+            ->contains(fn (string $legacyPermission) => array_key_exists($legacyPermission, $permissions)
+                ? (bool) $permissions[$legacyPermission]
+                : in_array($legacyPermission, $permissions, true));
     }
 
     public function hasRole($role): bool

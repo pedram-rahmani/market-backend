@@ -14,16 +14,16 @@ class CategoryPolicy
 
     public function create(User $user): bool
     {
-        return $user->isAdmin() || $user->hasPermission('categories.create');
+        return $user->isAdmin() || $user->hasPermission('categories.manage');
     }
 
     public function update(User $user, Category $category): bool
     {
-        return $user->isAdmin() || $user->hasPermission('categories.edit');
+        return $user->isAdmin() || $user->hasPermission('categories.manage');
     }
 
     public function delete(User $user, Category $category): bool
     {
-        return $user->isAdmin() || $user->hasPermission('categories.delete');
+        return $user->isAdmin() || $user->hasPermission('categories.manage');
     }
 }

@@ -3,7 +3,7 @@
 use App\Models\Chat\ChatConversation;
 use Illuminate\Support\Facades\Broadcast;
 
-// Chat view channel: only the conversation owner or a staff member with chats.view permission can join
+// Chat channel: owners and staff who can read or reply may join.
 Broadcast::channel('chat.{conversationId}', function ($user, int $conversationId) {
     $conversation = ChatConversation::find($conversationId);
 
@@ -15,14 +15,14 @@ Broadcast::channel('chat.{conversationId}', function ($user, int $conversationId
         return ['id' => $user->id, 'name' => $user->name];
     }
 
-    return $user->hasPermission('chats.view')
+    return $user->hasPermission('chats.read') || $user->hasPermission('chats.reply')
         ? ['id' => $user->id, 'name' => $user->name]
         : false;
 });
 
-// Staff chats channel: only admin/staff with chats.view permission can join
+// Staff list channel: only staff who can list conversations may join.
 Broadcast::channel('staff-chats', function ($user) {
-    return $user->hasPermission('chats.view')
+    return $user->hasPermission('chats.list')
         ? ['id' => $user->id, 'name' => $user->name]
         : false;
 });

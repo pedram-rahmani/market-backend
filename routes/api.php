@@ -87,10 +87,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::delete('/chat/conversations/{conversation}', [ChatController::class, 'destroy']);
 
     // --- Chat Management (Admin / Co-admin) ---
-    Route::get('/admin/chats', [ChatController::class, 'adminIndex'])->middleware('can:chats.view');
-    Route::get('/admin/chats/{conversation}', [ChatController::class, 'show'])->middleware('can:chats.view');
+    Route::get('/admin/chats', [ChatController::class, 'adminIndex'])->middleware('can:chats.list');
+    Route::get('/admin/chats/{conversation}', [ChatController::class, 'show'])->middleware('can:chats.read');
     Route::post('/admin/chats/{conversation}/messages', [ChatController::class, 'reply'])->middleware('can:chats.reply');
-    Route::patch('/admin/chats/{conversation}/status', [ChatController::class, 'updateStatus'])->middleware('can:chats.reply');
+    Route::patch('/admin/chats/{conversation}/status', [ChatController::class, 'updateStatus'])->middleware('can:chats.close');
     Route::delete('/admin/chats/{conversation}', [ChatController::class, 'destroy'])->middleware('can:chats.delete');
 
     // --- Notifications (Fixed Order) ---

@@ -25,7 +25,7 @@ class UserPolicy
 
     public function create(User $user)
     {
-        return $user->isAdmin() || $user->hasPermission('users.create');
+        return $user->isAdmin() || $user->hasPermission('users.manage');
     }
 
     public function update(User $currentUser, User $userToUpdate)
@@ -40,23 +40,23 @@ class UserPolicy
 
         return $currentUser->isCoAdmin()
             && !$userToUpdate->isAdmin()
-            && $currentUser->hasPermission('users.edit');
+            && $currentUser->hasPermission('users.manage');
     }
 
     public function viewDeleted(User $user)
     {
-        return $user->isAdmin() || $user->hasPermission('users.view');
+        return $user->isAdmin() || $user->hasPermission('users.manage');
     }
 
     public function updatePermissions(User $user, User $targetUser): bool
     {
         return $user->isAdmin()
-            || ($user->hasPermission('users.edit') && !$targetUser->isAdmin());
+            || ($user->hasPermission('users.manage') && !$targetUser->isAdmin());
     }
 
     public function restore(User $user, User $targetUser)
     {
-        return $user->isAdmin() || $user->hasPermission('users.restore');
+        return $user->isAdmin() || $user->hasPermission('users.manage');
     }
 
     public function delete(User $user, User $targetUser)
@@ -64,7 +64,7 @@ class UserPolicy
         if ($user->id === $targetUser->id) return false;
         if ($targetUser->isAdmin()) return false;
 
-        return $user->isAdmin() || $user->hasPermission('users.delete');
+        return $user->isAdmin() || $user->hasPermission('users.manage');
     }
 
     public function forceDelete(User $user, User $targetUser)
@@ -79,6 +79,6 @@ class UserPolicy
 
     public function demote(User $user)
     {
-        return $user->isAdmin() || $user->hasPermission('users.promote');
+        return $user->isAdmin() || $user->hasPermission('users.demote');
     }
 }

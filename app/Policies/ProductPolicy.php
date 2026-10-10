@@ -25,26 +25,26 @@ class ProductPolicy
             'user_permissions' => $user->permissions
         ]);
 
-        return $user->isAdmin() || $user->hasPermission('products.create');
+        return $user->isAdmin() || $user->hasPermission('products.manage');
     }
 
     public function update(User $user, Product $product): bool
     {
-        return $user->isAdmin() || $user->hasPermission('products.edit');
+        return $user->isAdmin() || $user->hasPermission('products.manage');
     }
 
     public function delete(User $user, Product $product): bool
     {
-        return $user->isAdmin() || $user->hasPermission('products.delete');
+        return $user->isAdmin() || $user->hasPermission('products.manage');
     }
 
     public function restore(User $user, Product $product): bool
     {
-        return $user->isAdmin() || $user->hasPermission('products.restore');
+        return $user->isAdmin() || $user->hasPermission('products.manage');
     }
 
     public function forceDelete(User $user, Product $product): bool
     {
-        return $user->isAdmin() || $user->hasPermission('products.forceDelete');
+        return $user->isAdmin() || $user->hasPermission('products.manage');
     }
 }
