@@ -36,10 +36,22 @@ class ProductController extends Controller
         // Category filter
         if ($request->has('category')) {
             $slug = $request->query('category');
-            $query->whereHas('category', function ($q) use ($slug) {
-                $q->where('slug', $slug)
-                  ->orWhere('name', $slug);
-            });
+            $category = \App\Models\Product\Category::where('slug', $slug)
+                ->orWhere('name', $slug)
+                ->first();
+
+            if ($category) {
+                // Include products from all descendant categories
+                $ids = [$category->id];
+                $parentIds = [$category->id];
+                while ($parentIds) {
+                    $parentIds = \App\Models\Product\Category::whereIn('parent_id', $parentIds)->pluck('id')->all();
+                    $ids = array_merge($ids, $parentIds);
+                }
+                $query->whereIn('category_id', $ids);
+            } else {
+                $query->whereRaw('1 = 0');
+            }
         }
 
         // Keyword search filter (matches name or brand)
