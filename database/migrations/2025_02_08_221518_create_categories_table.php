@@ -13,10 +13,8 @@ return new class extends Migration
 
             $table->string('name')->comment('عنوان فارسی دسته‌بندی برای نمایش در سایت');
 
-            // استفاده از unique برای جلوگیری از تکراری بودن URLها
             $table->string('slug')->unique()->comment('نامک انگلیسی برای URL (یکتا)');
 
-            // parent_id برای ایجاد ساختار درختی. index اضافه شده تا در کوئری‌های بزرگ سریع عمل کند
             $table->unsignedBigInteger('parent_id')->nullable()->index()->comment('آیدی دسته‌ی والد');
 
             $table->integer('level')->default(1)->comment('سطح در درخت: ۱ یعنی دسته اصلی، ۲ یعنی زیردسته');
@@ -25,7 +23,6 @@ return new class extends Migration
 
             $table->timestamps();
 
-            // تنظیم کلید خارجی با رعایت منطق cascade
             $table->foreign('parent_id')
                   ->references('id')
                   ->on('categories')
